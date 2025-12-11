@@ -1,0 +1,33 @@
+# src/chathub_app.py
+
+import streamlit as st
+
+# Importing our helper files
+from models_config import MODEL_NAMES, MODEL_CONFIG
+from api_helper import get_openrouter_response
+
+# --- 1. SET PAGE CONFIGURATION ---
+# We set the title, icon (using an emoji), and enable wide mode for better UI space.
+st.set_page_config(
+    page_title="ChatHub - Universal LLM Interface",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded" 
+)
+
+# --- 2. HEADER AND TITLE ---
+# The header is displayed prominently at the top.
+st.title("🤖 ChatHub: The Universal LLM Interface")
+st.caption("Powered by Streamlit and OpenRouter API. Talk to any model with one key!")
+
+# --- 3. INITIAL SYSTEM PROMPT ---
+# This is a hidden instruction we give the AI so it knows its role.
+SYSTEM_PROMPT = (
+    "You are ChatHub, a helpful and friendly AI assistant. "
+    "Your responses should be polite, concise, and professional. "
+    "Do not mention OpenRouter, Gemini, or Streamlit unless directly asked about them. "
+    "Focus on providing accurate and high-quality information."
+)
+
+# The rest of the app logic will go below here.
+# We will continue in the next steps.

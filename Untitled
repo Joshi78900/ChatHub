@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "chathub"
+version = "0.1.0"
+description = "A universal LLM chat interface powered by OpenRouter and Streamlit."
+authors = ["Joshi78900 <your.email@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.30.0"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
