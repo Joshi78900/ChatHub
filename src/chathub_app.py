@@ -25,11 +25,15 @@ SYSTEM_PROMPT = (
 )
 
 # --- PERSISTENCE: SAVE/LOAD FUNCTIONS ---
+# Defines the file name for local persistence (Streamlit Cloud runs in an isolated environment)
 HISTORY_FILE = "chathub_history.json" 
 
 def save_history():
     """Saves the current chat history to a JSON file."""
+    # We only save the actual chat messages (user/assistant), not the system prompt.
     chat_content = st.session_state["messages"][1:] 
+    
+    # Writing to a file in Streamlit Cloud's ephemeral storage
     with open(HISTORY_FILE, "w") as f:
         json.dump(chat_content, f, indent=4)
     st.toast("Chat history saved!", icon='💾')
@@ -40,9 +44,12 @@ def load_history():
         with open(HISTORY_FILE, "r") as f:
             try:
                 loaded_messages = json.load(f)
+                # Prepend the system prompt to the loaded messages
                 return [{"role": "system", "content": SYSTEM_PROMPT}] + loaded_messages
             except json.JSONDecodeError:
+                # Handle corrupted file by returning only the system prompt
                 return [{"role": "system", "content": SYSTEM_PROMPT}]
+    # If file doesn't exist or is empty/corrupted, start with only the system prompt
     return [{"role": "system", "content": SYSTEM_PROMPT}]
 
 def clear_and_start_new_chat():
@@ -54,9 +61,11 @@ def clear_and_start_new_chat():
     st.rerun() 
 
 # --- 4. SESSION STATE MANAGEMENT (Critical for continuity and persistence) ---
+# Initialize chat history by loading it from the file on app startup.
 if "messages" not in st.session_state:
     st.session_state["messages"] = load_history()
     
+# Initialize model selection if it doesn't exist
 if "selected_model" not in st.session_state:
     st.session_state["selected_model"] = MODEL_NAMES[0] 
 
@@ -95,12 +104,14 @@ with st.sidebar:
     st.subheader("💬 Recent History Preview")
     # Display the last 5 user messages in the sidebar for quick reference
     preview_count = 0
+    # Loop backwards through messages, skipping system prompt and AI replies
     for message in reversed(st.session_state["messages"]):
         if message["role"] == "user":
+            # Display a trimmed version of the question
             st.text(f"• {message['content'][:30]}...") 
             preview_count += 1
             if preview_count >= 5:
-                break
+                break # Show only the last 5 questions
             
     if preview_count == 0:
         st.caption("Start a new chat to see history.")
@@ -110,8 +121,7 @@ with st.sidebar:
     st.markdown("[GitHub Repo](https://github.com/Joshi78900/ChatHub.git)")
 
 # --- 6. MAIN CHAT CONTAINER (Gemini-style Centering) ---
-# We use st.container to create a centered column for the chat interface
-# This creates a visually cleaner, less "wide" look, like modern chat UIs.
+# We use st.columns to create a centered column for the chat interface
 col1, col2, col3 = st.columns([1, 4, 1])
 
 with col2:
@@ -148,8 +158,10 @@ with col2:
         # 7b. Generate Assistant Response
         with st.spinner(f"ChatHub is thinking using {st.session_state['selected_model']}..."):
             
+            # The model ID is fetched from the config using the user-friendly name
             current_model_id = MODEL_CONFIG[st.session_state["selected_model"]]["id"]
             
+            # Call the helper function to get the response, sending the full history
             assistant_response = get_openrouter_response(
                 model_id=current_model_id,
                 messages=st.session_state["messages"]
@@ -158,9 +170,11 @@ with col2:
         # 7c. Display and Save Assistant Response with Error Handling
         with st.chat_message("assistant"):
             if "ERROR:" in assistant_response or "API ERROR:" in assistant_response:
+                # Display error prominently
                 st.error(assistant_response)
                 st.warning("The error message above was NOT saved to the chat history.")
             else:
+                # Display the successful response
                 st.markdown(assistant_response)
                 
                 # CRITICAL: Save the AI's response ONLY IF it's not an error message
